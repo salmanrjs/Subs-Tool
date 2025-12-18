@@ -10,8 +10,6 @@ subs is a simple command-line tool written in Python. It finds subdomains using 
 * Check DNS first, then HTTP
 * Show only important results: **200, 403, 404**
 * Built-in delay to avoid fast scanning
-* Simple and clean output
-* Works on Windows and Linux (Kali)
 
 ---
 
