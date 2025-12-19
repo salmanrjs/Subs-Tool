@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import socket
 import requests
@@ -181,3 +179,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
