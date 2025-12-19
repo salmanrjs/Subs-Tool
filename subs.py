@@ -4,7 +4,6 @@ import requests
 import pyfiglet
 import os
 import time
-import random
 from colorama import Fore, Style
 from requests.exceptions import RequestException
 
@@ -13,18 +12,24 @@ from requests.exceptions import RequestException
 # ======================
 WORDLIST_FILE = "wordlist.txt"
 ALLOWED_STATUS = {200, 403, 404}
-DELAY_MIN = 0.05
-DELAY_MAX = 0.15
+DELAY = 0.01
+DEFAULT_TIMEOUT = 3
+MAX_TIMEOUT = 10
 
 # ======================
 # Banner
 # ======================
 def show_banner():
-    banner = pyfiglet.figlet_format("subs")
+    banner = pyfiglet.figlet_format("SubS")
     print(Fore.RED + banner + Style.RESET_ALL)
-    print("=" * 50)
-    print("Coded by Salman Rajab v1.0")
-    print("=" * 50)
+    print("-" * 30)
+    print(Fore.YELLOW + "# Subdomain Enumeration Tool" + Style.RESET_ALL)
+    print(Fore.CYAN + "# Coded by Salman Rajab v1.0" + Style.RESET_ALL)
+    print("-" * 30)
+    print()
+
+def show_usage():
+    print(Fore.GREEN + "Usage: python subs.py -d domain.com" + Style.RESET_ALL)
     print()
 
 # ======================
@@ -68,6 +73,8 @@ def scan(domain, timeout):
         print(Fore.RED + f"[!] Wordlist file not found: {WORDLIST_FILE}" + Style.RESET_ALL)
         return
 
+    print(Fore.CYAN + "[*] Start scanning..." + Style.RESET_ALL)
+
     with open(WORDLIST_FILE, "r", encoding="utf-8", errors="ignore") as f:
         words = f.read().splitlines()
 
@@ -82,10 +89,18 @@ def scan(domain, timeout):
             status = check_http(subdomain, timeout)
 
             if status in ALLOWED_STATUS:
-                color = Fore.GREEN if status == 200 else Fore.YELLOW
+                if status == 200:
+                    color = Fore.GREEN
+                elif status == 403:
+                    color = Fore.YELLOW
+                elif status == 404:
+                    color = Fore.RED
+                else:
+                    color = Fore.WHITE
+
                 print(color + f"[+] {subdomain} -> {status}" + Style.RESET_ALL)
 
-        time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
+        time.sleep(DELAY)
 
 # ======================
 # Main
@@ -94,30 +109,45 @@ def main():
     show_banner()
 
     parser = argparse.ArgumentParser(
-        description="subs - Subdomain Enumeration Tool",
-        usage="subs -d domain.com"
+        usage=argparse.SUPPRESS,
+        description=None,
+        add_help=False
     )
 
     parser.add_argument(
         "-d", "--domain",
-        help="Target domain (example.com)"
+        metavar="",
+        help="Target Domain (example.com)"
     )
 
     parser.add_argument(
         "-t", "--timeout",
+        metavar="",
         type=int,
-        default=3,
+        default=DEFAULT_TIMEOUT,
         help="HTTP timeout in seconds"
     )
 
-    args, _ = parser.parse_known_args()
+    args = parser.parse_args()
 
     if not args.domain:
+        show_usage()
         parser.print_help()
         return
+
+    # timeout validation
+    if args.timeout <= 0:
+        print(Fore.YELLOW + "[!] Invalid timeout. Using default (3s)." + Style.RESET_ALL)
+        args.timeout = DEFAULT_TIMEOUT
+    elif args.timeout > MAX_TIMEOUT:
+        print(
+            Fore.YELLOW
+            + f"[!] Timeout too high. Max allowed is {MAX_TIMEOUT}s. Using {MAX_TIMEOUT}s."
+            + Style.RESET_ALL
+        )
+        args.timeout = MAX_TIMEOUT
 
     scan(args.domain, args.timeout)
 
 if __name__ == "__main__":
     main()
-
